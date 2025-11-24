@@ -1,0 +1,19 @@
+{
+  "name": "expense-tracker",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "observable preview",
+    "build": "observable build",
+    "deploy": "wrangler pages deploy dist --project-name=expense-tracker"
+  },
+  "devDependencies": {
+    "@observablehq/framework": "^1.12.0",
+    "wrangler": "^4.50.0"
+  },
+  "dependencies": {
+    "d3-dsv": "^3.0.1",
+    "d3-time-format": "^4.1.0"
+  }
+}
