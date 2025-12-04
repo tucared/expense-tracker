@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --require ./setup-proxy.cjs ./node_modules/.bin/observable preview",
     "build": "node --require ./setup-proxy.cjs ./node_modules/.bin/observable build",
+    "build:no-proxy": "unset HTTPS_PROXY HTTPS_PROXY HTTP_PROXY http_proxy https_proxy GLOBAL_AGENT_HTTP_PROXY && observable build",
     "deploy": "wrangler pages deploy dist --project-name=expense-tracker"
   },
   "devDependencies": {
