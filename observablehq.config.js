@@ -9,5 +9,7 @@ export default {
   theme: "dashboard",
   toc: false,
   pager: false,
-  footer: ""
+  footer: "",
+  // Force Observable to use node_modules instead of CDN for npm: imports
+  npm: true
 };

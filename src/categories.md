@@ -1,6 +1,12 @@
 # Categories
 
 ```js
+// Import d3 and Plot from node_modules instead of CDN
+import * as d3 from "d3";
+import * as Plot from "@observablehq/plot";
+```
+
+```js
 const expenses = FileAttachment("data/expenses.json").json();
 const budgets = FileAttachment("data/budgets.json").json();
 ```
