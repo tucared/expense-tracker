@@ -1,0 +1,2 @@
+- You are running in a dev container
+- You have a playwright skill to use when you need to look at the local dev server

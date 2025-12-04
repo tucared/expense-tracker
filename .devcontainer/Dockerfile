@@ -27,6 +27,58 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   vim \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Playwright system dependencies and Chrome
+# These are required for browser automation with Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  # Playwright dependencies for Chromium
+  libasound2 \
+  libatk-bridge2.0-0 \
+  libatk1.0-0 \
+  libatspi2.0-0 \
+  libcairo2 \
+  libcups2 \
+  libdbus-1-3 \
+  libdrm2 \
+  libgbm1 \
+  libglib2.0-0 \
+  libnspr4 \
+  libnss3 \
+  libpango-1.0-0 \
+  libx11-6 \
+  libxcb1 \
+  libxcomposite1 \
+  libxdamage1 \
+  libxext6 \
+  libxfixes3 \
+  libxkbcommon0 \
+  libxrandr2 \
+  # Additional dependencies for full browser support
+  fonts-liberation \
+  xdg-utils \
+  wget \
+  ca-certificates \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome for Playwright MCP server (amd64 only)
+# On arm64, Chromium will be used instead via Playwright's bundled browser
+RUN ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" = "amd64" ]; then \
+    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends google-chrome-stable \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*; \
+  else \
+    echo "Skipping Google Chrome installation on $ARCH (not available). Using Playwright bundled Chromium."; \
+  fi
+
+# Create symlink to Playwright bundled Chromium for arm64 compatibility
+# This allows MCP Playwright server to find a browser at /opt/google/chrome/chrome
+RUN ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" != "amd64" ]; then \
+    mkdir -p /opt/google/chrome; \
+  fi
+
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
   chown -R node:node /usr/local/share
@@ -90,6 +142,16 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 # Install Claude
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
+# Install Playwright browsers and create Chrome symlink for MCP server on arm64
+# This must run as node user so browsers install to /home/node/.cache/ms-playwright
+RUN ARCH=$(dpkg --print-architecture) && \
+  npx playwright install chromium && \
+  if [ "$ARCH" != "amd64" ]; then \
+    CHROMIUM_PATH=$(find /home/node/.cache/ms-playwright -name "chrome" -type f -path "*/chrome-linux/*" 2>/dev/null | head -1) && \
+    if [ -n "$CHROMIUM_PATH" ]; then \
+      echo "Found Chromium at: $CHROMIUM_PATH"; \
+    fi; \
+  fi
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
@@ -97,4 +159,17 @@ USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
+
+# Create Chrome symlink for MCP Playwright server on arm64
+# The MCP server looks for Chrome at /opt/google/chrome/chrome
+RUN ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" != "amd64" ]; then \
+    CHROMIUM_PATH=$(find /home/node/.cache/ms-playwright -name "chrome" -type f -path "*/chrome-linux/*" 2>/dev/null | head -1) && \
+    if [ -n "$CHROMIUM_PATH" ]; then \
+      mkdir -p /opt/google/chrome && \
+      ln -sf "$CHROMIUM_PATH" /opt/google/chrome/chrome && \
+      echo "Created symlink: /opt/google/chrome/chrome -> $CHROMIUM_PATH"; \
+    fi; \
+  fi
+
 USER node

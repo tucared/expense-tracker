@@ -24,3 +24,7 @@ Thumbs.db
 *.swo
 *~
 .claude/settings.local.json
+
+# Playwright skill artifacts
+.claude/skills/*/node_modules/
+.claude/skills/*/.temp-execution-*.js
