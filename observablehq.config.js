@@ -1,20 +1,11 @@
 export default {
-  title: "Expense Tracker",
+  title: "Test Site",
+  root: "src",
   pages: [
-    { name: "Dashboard", path: "/" },
-    { name: "Categories", path: "/categories" },
-    { name: "Trends", path: "/trends" }
+    { name: "Dashboard", path: "/" }
   ],
   theme: "dashboard",
   toc: false,
   pager: false,
-  footer: "",
-  head: `<style>
-    :root {
-      --theme-foreground: #1a1a2e;
-      --theme-background: #fafafa;
-      --theme-accent: #e94560;
-      --theme-accent-secondary: #0f3460;
-    }
-  </style>`
+  footer: ""
 };
