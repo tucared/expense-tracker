@@ -31,11 +31,16 @@ Works immediately with sample data - no API keys needed to explore!
 ```
 Notion (expenses) + Google Sheets (budgets)
                 ↓
-    GitHub Actions (hourly cron)
-                ↓
-      Observable Framework build
-                ↓
-        Cloudflare Pages
+     Notion webhook ─────────────────┐
+                                     ↓
+                          Cloudflare Worker
+                                     ↓
+                          Deploy Hook trigger
+                                     ↓
+     Cloudflare Pages ←── builds site with fresh data
+
+PR previews: Cloudflare GitHub App (automatic)
+Manual refresh: GitHub Actions workflow_dispatch
 ```
 
 ## Make It Yours

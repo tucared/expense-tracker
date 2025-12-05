@@ -1,12 +1,7 @@
-name: Build and Deploy
+name: Manual Refresh
 
 on:
-  schedule:
-    # Run every hour
-    - cron: "0 * * * *"
-  push:
-    branches: [main]
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch: # Manual trigger only
 
 # Ensure only one deployment runs at a time
 concurrency:

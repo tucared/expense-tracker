@@ -1,5 +1,5 @@
 # Dependencies
-/node_modules
+node_modules/
 
 # Environment variables
 .env
@@ -8,6 +8,7 @@
 # Build output
 /dist
 /.observablehq/cache
+tmp/
 
 # Service account keys
 service-account*.json
@@ -26,5 +27,4 @@ Thumbs.db
 .claude/settings.local.json
 
 # Playwright skill artifacts
-.claude/skills/*/node_modules/
 .claude/skills/*/.temp-execution-*.js

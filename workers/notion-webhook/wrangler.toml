@@ -1,0 +1,8 @@
+name = "notion-webhook"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Set via `wrangler secret put`
+# VERIFICATION_TOKEN = "from Notion webhook setup"
+# DEPLOY_HOOK_URL = "from Cloudflare Pages"
