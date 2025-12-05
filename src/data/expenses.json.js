@@ -5,9 +5,13 @@ const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 
 if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
-  // Return empty array during local dev if secrets not set
-  console.warn("Notion credentials not found, using empty dataset");
-  console.log(JSON.stringify([]));
+  // Load sample data during local dev if secrets not set
+  const fs = await import("fs");
+  const path = await import("path");
+  const samplePath = path.join(import.meta.dirname, "sample-expenses.json");
+  const sampleData = fs.readFileSync(samplePath, "utf-8");
+  console.warn("Notion credentials not found, using sample data");
+  console.log(sampleData);
   process.exit(0);
 }
 

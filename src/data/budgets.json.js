@@ -6,8 +6,13 @@ const GOOGLE_SHEETS_ID = process.env.GOOGLE_SHEETS_ID;
 const GOOGLE_SHEETS_RANGE = process.env.GOOGLE_SHEETS_RANGE || "Sheet1!A:C";
 
 if (!GOOGLE_SERVICE_ACCOUNT || !GOOGLE_SHEETS_ID) {
-  console.warn("Google Sheets credentials not found, using empty dataset");
-  console.log(JSON.stringify([]));
+  // Load sample data during local dev if secrets not set
+  const fs = await import("fs");
+  const path = await import("path");
+  const samplePath = path.join(import.meta.dirname, "sample-budgets.json");
+  const sampleData = fs.readFileSync(samplePath, "utf-8");
+  console.warn("Google Sheets credentials not found, using sample data");
+  console.log(sampleData);
   process.exit(0);
 }
 
