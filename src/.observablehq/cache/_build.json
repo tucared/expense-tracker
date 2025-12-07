@@ -1,1 +1,0 @@
-{"title":"Expense Tracker","config":{"root":"src"},"pages":[{"path":"/","source":"/index.md","title":"Hello World"},{"path":"/test-explicit-import","source":"/test-explicit-import.md","title":"Test Explicit Import"}],"modules":[],"files":[]}

@@ -7,7 +7,7 @@ node_modules/
 
 # Build output
 /dist
-/.observablehq/cache
+src/.observablehq/cache
 tmp/
 
 # Service account keys
