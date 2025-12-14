@@ -85,10 +85,11 @@ Required in **Cloudflare Pages** (Settings → Environment variables):
 
 **Caching on Cloudflare Pages:**
 
-- Observable Framework caches data loaders in `.observablehq/cache/`
-- **Cloudflare Pages does NOT persist this cache between builds**
-- Each build fetches fresh data from Notion/Google Sheets APIs
-- This is actually ideal for an expense tracker - always up-to-date data
+- Observable Framework caches data loaders locally in `.observablehq/cache/`
+- Build caching can be enabled (see [DEPLOYMENT.md](./docs/DEPLOYMENT.md#build-caching))
+- However, **data loaders fetch ALL records on every build** (no incremental updates)
+- Build caching only speeds up dependency installation, not API calls
+- For this expense tracker, fresh data on every build is ideal
 
 **Scheduled builds:**
 If you want automatic hourly/daily builds (to refresh data without pushing code):

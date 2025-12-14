@@ -203,6 +203,59 @@ Everything fits in free tiers:
 
 ---
 
+## Build Caching
+
+Cloudflare Pages supports build caching to speed up dependency installation. **Note: This does NOT reduce API calls to Notion/Sheets.**
+
+### How to Enable
+
+1. Go to Cloudflare Dashboard → **Pages** → your project
+2. **Settings** → **Build & deployments** → **Build cache**
+3. Toggle **Enable build cache**
+4. Requires **V2 build system** or later
+
+### What Gets Cached
+
+- ✅ **Dependencies** (`node_modules`) - speeds up `npm install`
+- ✅ **Framework build artifacts** (Observable Framework output)
+- ❌ **NOT the data loader cache** (`.observablehq/cache/`)
+- ❌ **NOT API responses** (Notion, Google Sheets)
+
+### Limitations for This Project
+
+**Data loaders always fetch ALL records:**
+- `src/data/expenses.json.js` fetches entire Notion database (no date filter)
+- `src/data/budgets.json.js` fetches entire Google Sheet
+- No incremental updates or smart caching
+
+**When build caching helps:**
+- Faster dependency installation (~30-60s savings)
+- Useful if you push frequent code changes
+
+**When it doesn't help:**
+- Won't reduce Notion API calls (always fetches everything)
+- Won't reduce Google Sheets API calls
+- Won't make data fresher (it's already fresh every build)
+
+### Storage Limits
+
+- **10 GB per project**
+- Automatically deletes least-recently-used cache if exceeded
+- For this project: ~100-200 MB typical usage
+
+### Recommendation
+
+**You probably don't need it for this project** because:
+1. Builds triggered by Notion webhooks are already efficient (only when data changes)
+2. Dependency installation is fast for this small project
+3. Data loaders will fetch everything anyway
+
+**Enable it if:**
+- You're pushing code changes frequently
+- You want slightly faster preview builds on PRs
+
+---
+
 ## Troubleshooting
 
 ### Webhook not triggering deploys
