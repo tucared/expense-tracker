@@ -1,4 +1,6 @@
-// Preload script to configure undici proxy
+// Preload script to load .env and configure undici proxy
+require('dotenv').config();
+
 const { setGlobalDispatcher, ProxyAgent, Agent } = require('undici');
 
 const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;

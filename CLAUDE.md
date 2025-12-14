@@ -31,12 +31,14 @@ package.json                # Dependencies and npm scripts
 
 ## Common Commands
 
-| Task                | Command                    |
-| ------------------- | -------------------------- |
-| Start dev server    | `npm run dev`              |
-| View in browser     | http://localhost:3000      |
-| See current changes | `jj st`                    |
-| Commit changes      | `jj commit -m 'docs: ...'` |
+| Task                | Command                                                                    |
+| ------------------- | -------------------------------------------------------------------------- |
+| Start dev server    | `npm run dev`                                                              |
+| View in browser     | http://localhost:3000                                                      |
+| Test data loader    | `node src/data/expenses.json.js`                                           |
+| Test with real API  | `NOTION_API_KEY=xxx NOTION_DATABASE_ID=xxx node src/data/expenses.json.js` |
+| See current changes | `jj st`                                                                    |
+| Commit changes      | `jj commit -m 'docs: ...'`                                                 |
 
 ## Important Dev Container Notes
 

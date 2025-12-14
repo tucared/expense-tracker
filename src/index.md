@@ -7,6 +7,7 @@ import * as Plot from "@observablehq/plot";
 ```
 
 ```js
+// Load all expenses data loaders - Observable will cache these
 const expenses = FileAttachment("data/expenses.json").json();
 const budgets = FileAttachment("data/budgets.json").json();
 ```
@@ -15,10 +16,13 @@ const budgets = FileAttachment("data/budgets.json").json();
 // Get all available months
 const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)))].filter(Boolean).sort().reverse();
 
+// Current month as default
+const currentMonth = new Date().toISOString().slice(0, 7);
+
 // Month selector - drives entire page
 const selectedMonth = view(Inputs.select(months, {
   label: "Select Month",
-  value: months[0]
+  value: months.includes(currentMonth) ? currentMonth : months[0]
 }));
 ```
 
@@ -225,73 +229,63 @@ categoryBreakdownData.sort((a, b) => b.utilization - a.utilization);
 ```
 
 ```js
-{
-  const table = html`<table class="category-table">
-    <thead>
-      <tr>
-        <th>Category</th>
-        <th>Spent</th>
-        <th>Budget</th>
-        <th>Remaining</th>
-        <th>Utilization</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        class="category-row all-categories ${selectedTableCategory === "All Categories" ? 'selected' : ''}"
-        data-category="All Categories"
-        style="cursor: pointer;"
-      >
-        <td style="font-weight: bold;">All Categories</td>
-        <td>${totalSpent.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
-        <td>${totalBudget.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
-        <td style="color: ${remaining >= 0 ? 'var(--theme-accent)' : 'var(--theme-red)'}; font-weight: 600;">
-          ${remaining.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}
-        </td>
-        <td>
-          <div class="utilization-bar">
-            <div class="utilization-fill" style="
-              width: ${Math.min(totalBudget > 0 ? (totalSpent / totalBudget * 100) : 0, 100)}%;
-              background: ${totalSpent > totalBudget ? 'var(--theme-red)' : totalSpent / totalBudget > 0.8 ? 'orange' : 'var(--theme-accent)'};
-            "></div>
-            <span class="utilization-text">${totalBudget > 0 ? (totalSpent / totalBudget * 100).toFixed(0) : 0}%</span>
-          </div>
-        </td>
-      </tr>
-      ${categoryBreakdownData.map(d => html`<tr
-        class="category-row ${selectedTableCategory === d.category ? 'selected' : ''}"
-        data-category="${d.category}"
-        style="cursor: pointer;"
-      >
-        <td>${d.category}</td>
-        <td>${d.spent.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
-        <td>${d.budget.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
-        <td style="color: ${d.remaining >= 0 ? 'var(--theme-accent)' : 'var(--theme-red)'}; font-weight: 600;">
-          ${d.remaining.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}
-        </td>
-        <td>
-          <div class="utilization-bar">
-            <div class="utilization-fill" style="
-              width: ${Math.min(d.utilization, 100)}%;
-              background: ${d.utilization > 100 ? 'var(--theme-red)' : d.utilization > 80 ? 'orange' : 'var(--theme-accent)'};
-            "></div>
-            <span class="utilization-text">${d.utilization.toFixed(0)}%</span>
-          </div>
-        </td>
-      </tr>`)}
-    </tbody>
-  </table>`;
-
-  // Add event listeners to category rows
-  table.querySelectorAll('.category-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const category = row.getAttribute('data-category');
-      selectedTableCategory.value = category;
-    });
-  });
-
-  return table;
-}
+display(html`<table class="category-table">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Spent</th>
+      <th>Budget</th>
+      <th>Remaining</th>
+      <th>Utilization</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr
+      class="category-row all-categories ${selectedTableCategory === "All Categories" ? 'selected' : ''}"
+      data-category="All Categories"
+      style="cursor: pointer;"
+      onclick=${() => selectedTableCategory.value = "All Categories"}
+    >
+      <td style="font-weight: bold;">All Categories</td>
+      <td>${totalSpent.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
+      <td>${totalBudget.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
+      <td style="color: ${remaining >= 0 ? 'var(--theme-accent)' : 'var(--theme-red)'}; font-weight: 600;">
+        ${remaining.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}
+      </td>
+      <td>
+        <div class="utilization-bar">
+          <div class="utilization-fill" style="
+            width: ${Math.min(totalBudget > 0 ? (totalSpent / totalBudget * 100) : 0, 100)}%;
+            background: ${totalSpent > totalBudget ? 'var(--theme-red)' : totalSpent / totalBudget > 0.8 ? 'orange' : 'var(--theme-accent)'};
+          "></div>
+          <span class="utilization-text">${totalBudget > 0 ? (totalSpent / totalBudget * 100).toFixed(0) : 0}%</span>
+        </div>
+      </td>
+    </tr>
+    ${categoryBreakdownData.map(d => html`<tr
+      class="category-row ${selectedTableCategory === d.category ? 'selected' : ''}"
+      data-category="${d.category}"
+      style="cursor: pointer;"
+      onclick=${() => selectedTableCategory.value = d.category}
+    >
+      <td>${d.category}</td>
+      <td>${d.spent.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
+      <td>${d.budget.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}</td>
+      <td style="color: ${d.remaining >= 0 ? 'var(--theme-accent)' : 'var(--theme-red)'}; font-weight: 600;">
+        ${d.remaining.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}
+      </td>
+      <td>
+        <div class="utilization-bar">
+          <div class="utilization-fill" style="
+            width: ${Math.min(d.utilization, 100)}%;
+            background: ${d.utilization > 100 ? 'var(--theme-red)' : d.utilization > 80 ? 'orange' : 'var(--theme-accent)'};
+          "></div>
+          <span class="utilization-text">${d.utilization.toFixed(0)}%</span>
+        </div>
+      </td>
+    </tr>`)}
+  </tbody>
+</table>`);
 ```
 
 ## Transactions

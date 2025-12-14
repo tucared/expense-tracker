@@ -1,7 +1,9 @@
-name: Manual Refresh
+name: Build and Deploy
 
 on:
-  workflow_dispatch: # Manual trigger only
+  schedule:
+    - cron: '0 * * * *'  # Every hour at minute 0
+  workflow_dispatch: # Manual trigger
 
 # Ensure only one deployment runs at a time
 concurrency:
@@ -22,6 +24,14 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
+
+      - name: Cache Observable data
+        uses: actions/cache@v4
+        with:
+          path: .observablehq/cache
+          key: notion-cache-${{ github.run_id }}
+          restore-keys: |
+            notion-cache-
 
       - name: Install dependencies
         run: npm ci

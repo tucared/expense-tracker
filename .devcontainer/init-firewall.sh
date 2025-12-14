@@ -77,7 +77,11 @@ for domain in \
     "data.jsdelivr.com" \
     "esm.sh" \
     "cdn.playwright.dev" \
-    "playwright.download.prss.microsoft.com"; do
+    "playwright.download.prss.microsoft.com" \
+    "api.notion.com" \
+    "www.googleapis.com" \
+    "oauth2.googleapis.com" \
+    "sheets.googleapis.com"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
