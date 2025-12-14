@@ -8,7 +8,7 @@ Personal expense dashboard built with Observable Framework. Fetches expenses fro
 
 - **Framework**: Observable Framework (markdown with embedded reactive JavaScript)
 - **Visualization**: D3.js, Observable Plot
-- **Deployment**: Cloudflare Pages via GitHub Actions (hourly auto-builds)
+- **Deployment**: Cloudflare Pages (native GitHub integration, automatic builds on push)
 - **Data Sources**: Notion API (expenses), Google Sheets API (budgets)
 - **Version Control**: Jujutsu
 
@@ -17,15 +17,12 @@ Personal expense dashboard built with Observable Framework. Fetches expenses fro
 ```
 src/                        # Observable pages (markdown + JS)
 ├── index.md                # Dashboard - monthly summary, category breakdown
-├── categories.md           # Category deep-dive with month selector
-├── trends.md               # Historical trends, year-over-year
 └── data/
     ├── expenses.json.js    # Notion API data loader
     └── budgets.json.js     # Google Sheets data loader
 
 observablehq.config.js      # Page routing, theme, title
 package.json                # Dependencies and npm scripts
-.github/workflows/          # GitHub Actions for build + deploy
 .devcontainer/              # Dev container setup (network, firewall)
 ```
 
@@ -45,7 +42,7 @@ package.json                # Dependencies and npm scripts
 - Running in a network-restricted dev container
 - **Local builds fail** (CDN blocked by proxy) — this is expected
 - Use `npm run dev` for development (works perfectly)
-- All production builds happen in GitHub Actions (has CDN access)
+- All production builds happen on Cloudflare Pages (has CDN access)
 - Use the playwright skill to verify changes visually
 
 ## Key Files
@@ -59,13 +56,44 @@ package.json                # Dependencies and npm scripts
 
 ## Environment Variables
 
-Required in GitHub Secrets for deployment:
+Required in **Cloudflare Pages** (Settings → Environment variables):
 
-| Variable                 | Description                                  |
-| ------------------------ | -------------------------------------------- |
-| `NOTION_API_KEY`         | Notion integration secret                    |
-| `NOTION_DATABASE_ID`     | ID from Notion database URL                  |
-| `GOOGLE_SERVICE_ACCOUNT` | Full JSON of service account key             |
-| `GOOGLE_SHEETS_ID`       | ID from Google Sheet URL                     |
-| `CLOUDFLARE_API_TOKEN`   | Cloudflare API token (Pages edit permission) |
-| `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account ID                        |
+| Variable                 | Description                      |
+| ------------------------ | -------------------------------- |
+| `NOTION_API_KEY`         | Notion integration secret        |
+| `NOTION_DATABASE_ID`     | ID from Notion database URL      |
+| `GOOGLE_SERVICE_ACCOUNT` | Full JSON of service account key |
+| `GOOGLE_SHEETS_ID`       | ID from Google Sheet URL         |
+
+**How to set:**
+
+1. Go to Cloudflare Dashboard → Pages → expense-tracker
+2. Settings → Environment variables
+3. Add each variable for "Production" and "Preview" environments
+4. Trigger a new deployment (commit + push or manual retry)
+
+## Build & Deployment
+
+**How builds work:**
+
+- Cloudflare Pages watches your GitHub repository
+- On every push to main, it automatically:
+  1. Clones the repo
+  2. Runs `npm clean-install`
+  3. Runs `npm run build` (with environment variables)
+  4. Deploys the `dist/` folder
+
+**Caching on Cloudflare Pages:**
+
+- Observable Framework caches data loaders in `.observablehq/cache/`
+- **Cloudflare Pages does NOT persist this cache between builds**
+- Each build fetches fresh data from Notion/Google Sheets APIs
+- This is actually ideal for an expense tracker - always up-to-date data
+
+**Scheduled builds:**
+If you want automatic hourly/daily builds (to refresh data without pushing code):
+
+1. Use Cloudflare Pages Deploy Hooks:
+   - Pages → Settings → Builds & deployments → Deploy hooks
+   - Create a hook URL
+2. Set up a cron service (like GitHub Actions, Cloudflare Workers Cron, or cron-job.org) to POST to the hook URL
