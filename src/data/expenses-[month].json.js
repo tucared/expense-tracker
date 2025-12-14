@@ -1,21 +1,46 @@
-// Notion API loader for expenses
-// Runs at build time in GitHub Actions
+// Parameterized data loader: fetches expenses for a specific month
+// Invoked as: node expenses-[month].json.js --month=2025-01
+
+import { parseArgs } from "node:util";
 
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 
-if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
-  // Load sample data during local dev if secrets not set
-  const fs = await import("fs");
-  const path = await import("path");
-  const samplePath = path.join(import.meta.dirname, "sample-expenses.json");
-  const sampleData = fs.readFileSync(samplePath, "utf-8");
-  console.warn("Notion credentials not found, using sample data");
-  console.log(sampleData);
+// Parse CLI argument
+const { values } = parseArgs({
+  options: {
+    month: { type: "string" }
+  }
+});
+
+const month = values.month;
+
+// Validate month format
+if (!month || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+  console.error("Invalid or missing --month parameter (expected YYYY-MM with valid month)");
+  console.log(JSON.stringify([]));
   process.exit(0);
 }
 
-// Rate limiting helper
+// Fallback to sample data if no credentials
+if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
+  const fs = await import("fs");
+  const path = await import("path");
+  const samplePath = path.join(import.meta.dirname, `sample-expenses-${month}.json`);
+
+  try {
+    const sampleData = fs.readFileSync(samplePath, "utf-8");
+    console.warn(`Notion credentials not found, using sample data for ${month}`);
+    console.log(sampleData);
+    process.exit(0);
+  } catch (error) {
+    console.error(`No sample data file for ${month}: ${samplePath}`);
+    console.log(JSON.stringify([]));
+    process.exit(0);
+  }
+}
+
+// Rate limiting helper (copied from original loader)
 global.lastNotionRequest = global.lastNotionRequest || 0;
 
 async function fetchWithRateLimit() {
@@ -32,7 +57,14 @@ async function fetchWithRateLimit() {
   global.lastNotionRequest = Date.now();
 }
 
-async function fetchAllExpenses(startCursor = undefined, retries = 3) {
+// Calculate date range for the month
+const [year, monthNum] = month.split("-").map(Number);
+const startDate = `${month}-01`; // First day of month
+const endDate = new Date(year, monthNum, 0).toISOString().slice(0, 10); // Last day
+
+console.warn(`Fetching expenses for ${month} (${startDate} to ${endDate})`);
+
+async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
   await fetchWithRateLimit();
 
   for (let i = 0; i < retries; i++) {
@@ -50,6 +82,23 @@ async function fetchAllExpenses(startCursor = undefined, retries = 3) {
             start_cursor: startCursor,
             page_size: 100,
             sorts: [{ property: "Date", direction: "descending" }],
+            // SERVER-SIDE FILTER: Only fetch this month's expenses
+            filter: {
+              and: [
+                {
+                  property: "Date",
+                  date: {
+                    on_or_after: startDate
+                  }
+                },
+                {
+                  property: "Date",
+                  date: {
+                    on_or_before: endDate
+                  }
+                }
+              ]
+            }
           }),
         }
       );
@@ -81,16 +130,13 @@ async function fetchAll() {
   let startCursor = undefined;
   let pageCount = 0;
 
-  console.warn("Fetching all expenses from Notion...");
-
   while (hasMore) {
-    const data = await fetchAllExpenses(startCursor);
+    const data = await fetchMonthExpenses(startCursor);
     pageCount++;
 
     for (const page of data.results) {
       const props = page.properties;
 
-      // Extract fields - adjust property names to match your Notion database
       const expense = {
         id: page.id,
         date: props.Date?.date?.start || null,
@@ -99,7 +145,8 @@ async function fetchAll() {
         payment_method: props["Payment Method"]?.select?.name || "Unknown",
       };
 
-      if (expense.date) {
+      // Double-check date is in correct month (defense in depth)
+      if (expense.date && expense.date.startsWith(month)) {
         expenses.push(expense);
       }
     }
@@ -107,14 +154,12 @@ async function fetchAll() {
     hasMore = data.has_more;
     startCursor = data.next_cursor;
 
-    console.warn(`Processed page ${pageCount}, ${expenses.length} expenses so far`);
+    console.warn(`Page ${pageCount}: ${expenses.length} expenses for ${month}`);
   }
 
-  console.warn(`Complete: ${expenses.length} expenses from ${pageCount} pages`);
+  console.warn(`Complete: ${expenses.length} expenses for ${month}`);
   return expenses;
 }
 
 const expenses = await fetchAll();
-
 console.log(JSON.stringify(expenses));
-
