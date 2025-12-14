@@ -1,12 +1,13 @@
 # Redirecting...
 
 ```js
-// Redirect to current month
-const currentMonth = new Date().toISOString().slice(0, 7);
-window.location.replace(`/${currentMonth}`);
+// Load available months and redirect to the most recent one with data
+const availableMonths = FileAttachment("data/available-months.json").json();
+const lastMonth = (await availableMonths)[0]; // First element is most recent (descending order)
+window.location.replace(`/${lastMonth}`);
 ```
 
-<p>Redirecting to current month: <a href="/${currentMonth}">${currentMonth}</a></p>
+<p>Redirecting to latest month with data: <a href="/${lastMonth}">${lastMonth}</a></p>
 
 <style>
 body {
