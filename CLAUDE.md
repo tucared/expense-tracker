@@ -18,14 +18,14 @@ Standard Observable Framework structure: pages in `src/`, data loaders in `src/d
 
 ## Common Commands
 
-| Task                | Command                                                                    |
-| ------------------- | -------------------------------------------------------------------------- |
-| Start dev server    | `npm run dev`                                                              |
-| View in browser     | http://localhost:3000                                                      |
-| Test data loader    | `node src/data/expenses.json.js`                                           |
-| Test with real API  | `NOTION_API_KEY=xxx NOTION_DATABASE_ID=xxx node src/data/expenses.json.js` |
-| See current changes | `jj st`                                                                    |
-| Commit changes      | `jj commit -m 'docs: ...'`                                                 |
+| Task                          | Command                                   |
+|-------------------------------|-------------------------------------------|
+| Start dev server (.env)       | `npm run dev`                             |
+| Start dev server (.env.local) | `npx dotenv -e .env.local -- npm run dev` |
+| Clear data                    | `rm -rf src/.observablehq/cache/data`     |
+| View in browser               | http://localhost:3000                     |
+| See current changes           | `jj st`                                   |
+| Commit changes                | `jj commit -m 'docs: ...'`                |
 
 ## Important Dev Container Notes
 
