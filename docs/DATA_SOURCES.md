@@ -127,7 +127,9 @@ GOOGLE_SHEETS_RANGE=Sheet1!A:C
 
 ## Environment Variables Summary
 
-For local development, create a `.env` file:
+### Local Development
+
+Create a `.env` file in the project root:
 
 ```bash
 # Notion
@@ -137,10 +139,14 @@ NOTION_DATABASE_ID=xxx
 # Google Sheets
 GOOGLE_SERVICE_ACCOUNT='{"type":"service_account",...}'
 GOOGLE_SHEETS_ID=xxx
-GOOGLE_SHEETS_RANGE=Sheet1!A:C
+GOOGLE_SHEETS_RANGE=Sheet1!A:C  # optional, defaults to Sheet1!A:C
 ```
 
-For deployment, see [DEPLOYMENT.md](./DEPLOYMENT.md) for GitHub Secrets setup.
+The `.env` file is gitignored and will be automatically loaded when you run `npm run dev`.
+
+### Deployment
+
+For Cloudflare Pages deployment, set these as environment variables in your Cloudflare Pages project settings. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
 
 ---
 

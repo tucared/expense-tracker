@@ -14,17 +14,7 @@ Personal expense dashboard built with Observable Framework. Fetches expenses fro
 
 ## Directory Structure
 
-```
-src/                        # Observable pages (markdown + JS)
-├── index.md                # Dashboard - monthly summary, category breakdown
-└── data/
-    ├── expenses.json.js    # Notion API data loader
-    └── budgets.json.js     # Google Sheets data loader
-
-observablehq.config.js      # Page routing, theme, title
-package.json                # Dependencies and npm scripts
-.devcontainer/              # Dev container setup (network, firewall)
-```
+Standard Observable Framework structure: pages in `src/`, data loaders in `src/data/`, config in `observablehq.config.js`.
 
 ## Common Commands
 
@@ -45,56 +35,7 @@ package.json                # Dependencies and npm scripts
 - All production builds happen on Cloudflare Pages (has CDN access)
 - Use the playwright skill to verify changes visually
 
-## Key Files
+## Documentation
 
-| File                        | Purpose                                                  |
-| --------------------------- | -------------------------------------------------------- |
-| `src/data/expenses.json.js` | Fetches from Notion API, transforms expense records      |
-| `src/data/budgets.json.js`  | Fetches from Google Sheets with JWT service account auth |
-| `src/index.md`              | Main dashboard with D3 aggregations                      |
-| `observablehq.config.js`    | Site config: pages, theme, title                         |
-
-## Environment Variables
-
-Required in **Cloudflare Pages** (Settings → Environment variables):
-
-| Variable                 | Description                      |
-| ------------------------ | -------------------------------- |
-| `NOTION_API_KEY`         | Notion integration secret        |
-| `NOTION_DATABASE_ID`     | ID from Notion database URL      |
-| `GOOGLE_SERVICE_ACCOUNT` | Full JSON of service account key |
-| `GOOGLE_SHEETS_ID`       | ID from Google Sheet URL         |
-
-**How to set:**
-
-1. Go to Cloudflare Dashboard → Pages → expense-tracker
-2. Settings → Environment variables
-3. Add each variable for "Production" and "Preview" environments
-4. Trigger a new deployment (commit + push or manual retry)
-
-## Build & Deployment
-
-**How builds work:**
-
-- Cloudflare Pages watches your GitHub repository
-- On every push to main, it automatically:
-  1. Clones the repo
-  2. Runs `npm clean-install`
-  3. Runs `npm run build` (with environment variables)
-  4. Deploys the `dist/` folder
-
-**Caching on Cloudflare Pages:**
-
-- Observable Framework caches data loaders locally in `.observablehq/cache/`
-- Build caching can be enabled (see [DEPLOYMENT.md](./docs/DEPLOYMENT.md#build-caching))
-- However, **data loaders fetch ALL records on every build** (no incremental updates)
-- Build caching only speeds up dependency installation, not API calls
-- For this expense tracker, fresh data on every build is ideal
-
-**Scheduled builds:**
-If you want automatic hourly/daily builds (to refresh data without pushing code):
-
-1. Use Cloudflare Pages Deploy Hooks:
-   - Pages → Settings → Builds & deployments → Deploy hooks
-   - Create a hook URL
-2. Set up a cron service (like GitHub Actions, Cloudflare Workers Cron, or cron-job.org) to POST to the hook URL
+- **Data Sources**: See [docs/DATA_SOURCES.md](./docs/DATA_SOURCES.md) for connecting Notion and Google Sheets
+- **Deployment**: See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for Cloudflare Pages setup and environment variables

@@ -1,5 +1,4 @@
 // Notion API loader for expenses
-// Runs at build time in GitHub Actions
 
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
@@ -33,7 +32,9 @@ async function fetchAllExpenses() {
     );
 
     if (!response.ok) {
-      throw new Error(`Notion API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Notion API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();

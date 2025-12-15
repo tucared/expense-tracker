@@ -1,5 +1,4 @@
 // Google Sheets API loader for budgets with service account authentication
-// Runs at build time in GitHub Actions
 
 const GOOGLE_SERVICE_ACCOUNT = process.env.GOOGLE_SERVICE_ACCOUNT;
 const GOOGLE_SHEETS_ID = process.env.GOOGLE_SHEETS_ID;
@@ -42,7 +41,9 @@ async function getAccessToken() {
   // Import crypto for signing
   const crypto = await import("crypto");
 
-  const headerBase64 = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const headerBase64 = Buffer.from(JSON.stringify(header)).toString(
+    "base64url"
+  );
   const claimBase64 = Buffer.from(JSON.stringify(claim)).toString("base64url");
   const signatureInput = `${headerBase64}.${claimBase64}`;
 
@@ -63,7 +64,9 @@ async function getAccessToken() {
   });
 
   if (!response.ok) {
-    throw new Error(`OAuth token error: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `OAuth token error: ${response.status} ${response.statusText}`
+    );
   }
 
   const data = await response.json();
@@ -73,7 +76,9 @@ async function getAccessToken() {
 async function fetchBudgets() {
   const accessToken = await getAccessToken();
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEETS_ID}/values/${encodeURIComponent(GOOGLE_SHEETS_RANGE)}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEETS_ID}/values/${encodeURIComponent(
+    GOOGLE_SHEETS_RANGE
+  )}`;
 
   const response = await fetch(url, {
     headers: {
@@ -82,7 +87,9 @@ async function fetchBudgets() {
   });
 
   if (!response.ok) {
-    throw new Error(`Google Sheets API error: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Google Sheets API error: ${response.status} ${response.statusText}`
+    );
   }
 
   const data = await response.json();
