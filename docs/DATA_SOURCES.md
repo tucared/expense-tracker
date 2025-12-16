@@ -68,22 +68,9 @@ Create a Google Sheet with columns or duplicate this [template](https://docs.goo
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Create a new project (or select existing)
-3. Enable the **Google Sheets API**:
-   - Go to **APIs & Services** → **Library**
-   - Search "Google Sheets API"
-   - Click **Enable**
-
-4. Create Service Account:
-   - Go to **APIs & Services** → **Credentials**
-   - Click **Create Credentials** → **Service Account**
-   - Name it (e.g., "expense-tracker-reader")
-   - Click **Create and Continue** → **Done**
-
-5. Create JSON Key:
-   - Click on your service account
-   - Go to **Keys** tab
-   - Click **Add Key** → **Create new key** → **JSON**
-   - Save the downloaded file
+3. [Enable](https://support.google.com/googleapi/answer/6158841?hl=en) the **Google Sheets API**
+4. [Create a Service Account](https://docs.cloud.google.com/iam/docs/service-accounts-create#creating) (e.g., "expense-tracker-reader":
+5. [Create a JSON Key](https://docs.cloud.google.com/iam/docs/keys-create-delete#creating) for this account
 
 ### 3. Share Sheet with Service Account
 
