@@ -28,8 +28,8 @@ This guide covers deploying the expense tracker to Cloudflare Pages.
    - **Build command**: `npm run build`
    - **Build output directory**: `dist`
 6. Add environment variables:
-   - `NOTION_API_KEY`
-   - `NOTION_DATABASE_ID`
+   - `NOTION_API_KEY` - Your Notion integration API key
+   - `NOTION_DATABASE_ID` - Your database ID (API auto-discovers data source)
    - `FIRST_EXPENSE_MONTH`
    - `GOOGLE_SERVICE_ACCOUNT`
    - `GOOGLE_SHEETS_ID`

@@ -1,5 +1,10 @@
 // Parameterized data loader: fetches expenses for a specific month
 // Invoked as: node expenses-[month].json.js --month=2025-01
+//
+// NOTION API VERSION: 2025-09-03
+// This version introduces "data sources" - databases can have multiple data sources.
+// We auto-discover the data_source_id and use it for queries instead of database_id.
+// See: https://developers.notion.com/docs/upgrade-guide-2025-09-03
 
 import { parseArgs } from "node:util";
 
@@ -59,6 +64,54 @@ async function fetchWithRateLimit() {
   global.lastNotionRequest = Date.now();
 }
 
+// Data source discovery for API v2025-09-03
+let cachedDataSourceId = null;
+
+async function discoverDataSourceId() {
+  await fetchWithRateLimit();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  const response = await fetch(
+    `https://api.notion.com/v1/databases/${NOTION_DATABASE_ID}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${NOTION_API_KEY}`,
+        "Notion-Version": "2025-09-03",
+      },
+      signal: controller.signal,
+    }
+  );
+
+  clearTimeout(timeoutId);
+
+  if (!response.ok) {
+    throw new Error(`Database discovery failed: ${response.status}`);
+  }
+
+  const database = await response.json();
+
+  if (!database.data_sources || database.data_sources.length === 0) {
+    throw new Error("No data sources found for database");
+  }
+
+  if (database.data_sources.length > 1) {
+    console.warn(`Database has ${database.data_sources.length} data sources, using first`);
+  }
+
+  return database.data_sources[0].id;
+}
+
+async function getDataSourceId() {
+  if (!cachedDataSourceId) {
+    cachedDataSourceId = await discoverDataSourceId();
+    console.warn(`Discovered data_source_id: ${cachedDataSourceId.slice(0, 12)}...`);
+  }
+  return cachedDataSourceId;
+}
+
 // Calculate date range for the month (reuse parsed values from validation above)
 const startDate = `${month}-01`; // First day of month
 const endDate = new Date(year, monthNum, 0).toISOString().slice(0, 10); // Last day
@@ -66,6 +119,9 @@ const endDate = new Date(year, monthNum, 0).toISOString().slice(0, 10); // Last 
 console.warn(`Fetching expenses for ${month} (${startDate} to ${endDate})`);
 
 async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
+  // Get data source ID (cached after first call)
+  const dataSourceId = await getDataSourceId();
+
   await fetchWithRateLimit();
 
   for (let i = 0; i < retries; i++) {
@@ -75,12 +131,12 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
       const response = await fetch(
-        `https://api.notion.com/v1/databases/${NOTION_DATABASE_ID}/query`,
+        `https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${NOTION_API_KEY}`,
-            "Notion-Version": "2022-06-28",
+            "Notion-Version": "2025-09-03",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
