@@ -28,14 +28,11 @@ Standard Observable Framework structure: pages in `src/`, data loaders in `src/d
 | See current changes           | `jj st`                                   |
 | Commit changes                | `jj commit -m 'docs: ...'`                |
 
-## Important Dev Container Notes
+## Dev Notes
 
-- Running in a network-restricted dev container with firewall rules
-- **Package installation**: npm registry access is blocked during development for security
-  - To add new packages: update `package.json`, then **rebuild the dev container**
-  - Packages are installed during container build via `postCreateCommand`
+- Running in a dev container
 - Production builds happen automatically on Cloudflare Pages via GitHub integration
-- Use the playwright skill to verify changes visually
+- Use the playwright cli to verify changes visually
 
 ## Documentation
 
