@@ -3,11 +3,9 @@ import { generateMonthList } from "./src/lib/month-utils.js";
 export default {
   title: "Expense Tracker",
   root: "src",
-  theme: "dashboard",
   toc: false,
   pager: false,
   footer: "",
-  // Force Observable to use node_modules instead of CDN for npm: imports
   npm: true,
 
   // Generate dynamic routes for each month
