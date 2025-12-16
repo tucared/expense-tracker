@@ -1,4 +1,4 @@
-import { getAvailableMonths } from "./src/lib/notion-months.js";
+import { generateMonthList } from "./src/lib/month-utils.js";
 
 export default {
   title: "Expense Tracker",
@@ -13,8 +13,10 @@ export default {
   // Generate dynamic routes for each month
   async *dynamicPaths() {
     try {
-      const months = await getAvailableMonths();
-      console.warn(`Generating routes for ${months.length} months: ${months.join(", ")}`);
+      const months = generateMonthList();
+      console.warn(
+        `Generating routes for ${months.length} months: ${months.join(", ")}`
+      );
 
       for (const month of months) {
         yield `/${month}`;
@@ -24,5 +26,5 @@ export default {
       // Fallback: at minimum generate current month
       yield `/${new Date().toISOString().slice(0, 7)}`;
     }
-  }
+  },
 };

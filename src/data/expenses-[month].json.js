@@ -22,22 +22,24 @@ if (!month || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
   process.exit(0);
 }
 
-// Fallback to sample data if no credentials
-if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
-  const fs = await import("fs");
-  const path = await import("path");
-  const samplePath = path.join(import.meta.dirname, `sample-expenses-${month}.json`);
+// Check if month is in the future - if so, return empty data
+const [year, monthNum] = month.split("-").map(Number);
+const now = new Date();
+const currentYear = now.getFullYear();
+const currentMonth = now.getMonth() + 1;
 
-  try {
-    const sampleData = fs.readFileSync(samplePath, "utf-8");
-    console.warn(`Notion credentials not found, using sample data for ${month}`);
-    console.log(sampleData);
-    process.exit(0);
-  } catch (error) {
-    console.error(`No sample data file for ${month}: ${samplePath}`);
-    console.log(JSON.stringify([]));
-    process.exit(0);
-  }
+const isFuture = year > currentYear || (year === currentYear && monthNum > currentMonth);
+if (isFuture) {
+  console.warn(`Month ${month} is in the future, returning empty data`);
+  console.log(JSON.stringify([]));
+  process.exit(0);
+}
+
+// Fallback to empty data if no credentials
+if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
+  console.warn(`Notion credentials not found, returning empty data for ${month}`);
+  console.log(JSON.stringify([]));
+  process.exit(0);
 }
 
 // Rate limiting helper (copied from original loader)
@@ -57,8 +59,7 @@ async function fetchWithRateLimit() {
   global.lastNotionRequest = Date.now();
 }
 
-// Calculate date range for the month
-const [year, monthNum] = month.split("-").map(Number);
+// Calculate date range for the month (reuse parsed values from validation above)
 const startDate = `${month}-01`; // First day of month
 const endDate = new Date(year, monthNum, 0).toISOString().slice(0, 10); // Last day
 
@@ -69,6 +70,10 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
 
   for (let i = 0; i < retries; i++) {
     try {
+      // Add timeout protection to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(
         `https://api.notion.com/v1/databases/${NOTION_DATABASE_ID}/query`,
         {
@@ -100,8 +105,11 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
               ]
             }
           }),
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (response.status === 429) {
         const retryAfter = parseInt(response.headers.get('retry-after') || '1');
@@ -116,6 +124,11 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
 
       return await response.json();
     } catch (error) {
+      // Handle timeout abort errors
+      if (error.name === 'AbortError') {
+        console.error(`Request timeout (10s) for ${month}`);
+      }
+
       if (i === retries - 1) throw error;
       const backoff = Math.pow(2, i) * 1000;
       console.warn(`Retry ${i + 1}/${retries} after ${backoff}ms: ${error.message}`);
@@ -125,41 +138,59 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
 }
 
 async function fetchAll() {
-  const expenses = [];
-  let hasMore = true;
-  let startCursor = undefined;
-  let pageCount = 0;
+  try {
+    const expenses = [];
+    let hasMore = true;
+    let startCursor = undefined;
+    let pageCount = 0;
+    const MAX_PAGES = 50; // Safety limit to prevent infinite loops
 
-  while (hasMore) {
-    const data = await fetchMonthExpenses(startCursor);
-    pageCount++;
+    while (hasMore && pageCount < MAX_PAGES) {
+      const data = await fetchMonthExpenses(startCursor);
+      pageCount++;
 
-    for (const page of data.results) {
-      const props = page.properties;
+      for (const page of data.results) {
+        const props = page.properties;
 
-      const expense = {
-        id: page.id,
-        date: props.Date?.date?.start || null,
-        amount: props.Amount?.number || 0,
-        category: props.Category?.select?.name || "Uncategorized",
-        payment_method: props["Payment Method"]?.select?.name || "Unknown",
-      };
+        const expense = {
+          id: page.id,
+          date: props.Date?.date?.start || null,
+          amount: props.Amount?.number || 0,
+          category: props.Category?.select?.name || "Uncategorized",
+          payment_method: props["Payment Method"]?.select?.name || "Unknown",
+        };
 
-      // Double-check date is in correct month (defense in depth)
-      if (expense.date && expense.date.startsWith(month)) {
-        expenses.push(expense);
+        // Double-check date is in correct month (defense in depth)
+        if (expense.date && expense.date.startsWith(month)) {
+          expenses.push(expense);
+        }
       }
+
+      hasMore = data.has_more;
+      startCursor = data.next_cursor;
+
+      console.warn(`Page ${pageCount}: ${expenses.length} expenses for ${month}`);
     }
 
-    hasMore = data.has_more;
-    startCursor = data.next_cursor;
+    if (pageCount >= MAX_PAGES && hasMore) {
+      console.warn(`Reached max page limit (${MAX_PAGES}), stopping pagination`);
+    }
 
-    console.warn(`Page ${pageCount}: ${expenses.length} expenses for ${month}`);
+    console.warn(`Complete: ${expenses.length} expenses for ${month}`);
+    return expenses;
+  } catch (error) {
+    console.error(`Failed to fetch expenses for ${month}: ${error.message}`);
+    // Return empty array instead of crashing - allows build to continue
+    return [];
   }
-
-  console.warn(`Complete: ${expenses.length} expenses for ${month}`);
-  return expenses;
 }
 
-const expenses = await fetchAll();
-console.log(JSON.stringify(expenses));
+// Top-level error handling - always output valid JSON
+try {
+  const expenses = await fetchAll();
+  console.log(JSON.stringify(expenses));
+} catch (error) {
+  console.error(`Fatal error fetching expenses for ${month}: ${error.message}`);
+  // Output empty array to allow build to continue
+  console.log(JSON.stringify([]));
+}

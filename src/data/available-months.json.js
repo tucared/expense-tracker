@@ -1,6 +1,5 @@
-import { getAvailableMonths } from "../lib/notion-months.js";
+import { generateMonthList } from "../lib/month-utils.js";
 
-// Data loader that exports available months for client-side use
-const months = await getAvailableMonths();
+const months = generateMonthList();
 
 process.stdout.write(JSON.stringify(months, null, 2));

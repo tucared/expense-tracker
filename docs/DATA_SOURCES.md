@@ -51,8 +51,9 @@ https://notion.so/workspace/abc123def456...?v=...
 ### 5. Set Environment Variables
 
 ```bash
-NOTION_API_KEY=secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+NOTION_API_KEY=ntn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 NOTION_DATABASE_ID=abc123def456...
+FIRST_EXPENSE_MONTH=2024-01  # Your first month with expense data
 ```
 
 ---
@@ -63,12 +64,12 @@ NOTION_DATABASE_ID=abc123def456...
 
 Create a Google Sheet with columns:
 
-| month | category | budget_eur |
-|-------|----------|------------|
-| 2024-12 | Groceries | 400 |
-| 2024-12 | Transport | 150 |
-| 2024-11 | Groceries | 400 |
-| ... | ... | ... |
+| month   | category  | budget_eur |
+|---------|-----------|------------|
+| 2024-12 | Groceries | 400        |
+| 2024-12 | Transport | 150        |
+| 2024-11 | Groceries | 400        |
+| ...     | ...       | ...        |
 
 - `month`: YYYY-MM format
 - `category`: Must match your Notion categories exactly
@@ -135,6 +136,7 @@ Create a `.env` file in the project root:
 # Notion
 NOTION_API_KEY=secret_xxx
 NOTION_DATABASE_ID=xxx
+FIRST_EXPENSE_MONTH=2024-01
 
 # Google Sheets
 GOOGLE_SERVICE_ACCOUNT='{"type":"service_account",...}'
@@ -147,23 +149,3 @@ The `.env` file is gitignored and will be automatically loaded when you run `npm
 ### Deployment
 
 For Cloudflare Pages deployment, set these as environment variables in your Cloudflare Pages project settings. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
-
----
-
-## Troubleshooting
-
-### "Notion API error: 401"
-- Check your `NOTION_API_KEY` is correct
-- Verify the integration is shared with your database
-
-### "Notion API error: 404"
-- Check your `NOTION_DATABASE_ID` is correct
-- Make sure you're using the database ID, not the page ID
-
-### "Google Sheets API error"
-- Verify the Sheets API is enabled in your Google Cloud project
-- Check the service account email has access to the sheet
-- Ensure `GOOGLE_SERVICE_ACCOUNT` is valid JSON
-
-### Categories don't match
-- Budget categories must exactly match Notion category names (case-sensitive)

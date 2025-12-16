@@ -21,6 +21,7 @@ Standard Observable Framework structure: pages in `src/`, data loaders in `src/d
 | Task                          | Command                                   |
 |-------------------------------|-------------------------------------------|
 | Start dev server (.env)       | `npm run dev`                             |
+| Build site (.env)             | `npm run build`                           |
 | Start dev server (.env.local) | `npx dotenv -e .env.local -- npm run dev` |
 | Clear data                    | `rm -rf src/.observablehq/cache/data`     |
 | View in browser               | http://localhost:3000                     |
@@ -33,11 +34,8 @@ Standard Observable Framework structure: pages in `src/`, data loaders in `src/d
 - **Package installation**: npm registry access is blocked during development for security
   - To add new packages: update `package.json`, then **rebuild the dev container**
   - Packages are installed during container build via `postCreateCommand`
-- **Local builds**: `npm run build` works within the container (CDNs are allowed through firewall)
-  - Use `npm run dev` for development (works perfectly)
-  - Production builds happen automatically on Cloudflare Pages via GitHub integration
+- Production builds happen automatically on Cloudflare Pages via GitHub integration
 - Use the playwright skill to verify changes visually
-- **Playwright**: Browser automation works via Chromium installed in container at `/opt/google/chrome/chrome`
 
 ## Documentation
 
