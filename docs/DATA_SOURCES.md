@@ -8,38 +8,31 @@ The dashboard pulls data from two sources:
 - **Notion** - Your expense records (date, amount, category, payment method)
 - **Google Sheets** - Your monthly budgets per category
 
-Both are optional. Without credentials, the app uses sample data.
-
 ---
 
 ## Notion Setup (Expenses)
 
 ### 1. Create Your Expense Database
 
-Create a Notion database with these properties:
+Create a Notion database with these properties or duplicate this [template](https://adjoining-heath-cac.notion.site/1e81ed43cd7081609485d8f73c0d5e36?v=1e81ed43cd7081f88063000c38133b27):
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `Date` | Date | When the expense occurred |
-| `Amount` | Number | Cost in your currency |
-| `Category` | Select | e.g., Groceries, Transport, Dining |
-| `Payment Method` | Select | e.g., Card, Cash, Bank Transfer |
+| Property         | Type   | Description                        |
+|------------------|--------|------------------------------------|
+| `Date`           | Date   | When the expense occurred          |
+| `Amount`         | Number | Cost in your currency              |
+| `Category`       | Select | e.g., Groceries, Transport, Dining |
+| `Payment Method` | Select | e.g., Card, Cash, Bank Transfer    |
 
-### 2. Create a Notion Integration
+### 2. Create a Notion Integration and share with Database
 
-1. Go to [Notion Integrations](https://www.notion.so/my-integrations)
-2. Click **New integration**
-3. Name it (e.g., "Expense Tracker")
-4. Select your workspace
-5. Copy the **Internal Integration Secret** (starts with `secret_`)
+Follow the [Build your first integration](https://developers.notion.com/docs/create-a-notion-integration) tutorial from Notion
+- [Create your integration in Notion](https://developers.notion.com/docs/create-a-notion-integration#create-your-integration-in-notion)
+- [Get your API secret](https://developers.notion.com/docs/create-a-notion-integration#get-your-api-secret)
+- [Give your integration page permissions](https://developers.notion.com/docs/create-a-notion-integration#give-your-integration-page-permissions)
 
-### 3. Share Database with Integration
+Only `read_content` permission is needed
 
-1. Open your expense database in Notion
-2. Click **...** menu → **Add connections**
-3. Select your integration
-
-### 4. Get Your Database ID
+### 3. Get Your Database ID
 
 From your database URL:
 ```
@@ -48,13 +41,9 @@ https://notion.so/workspace/abc123def456...?v=...
                         This is your database ID
 ```
 
-### 5. Set Environment Variables
-
-```bash
-NOTION_API_KEY=ntn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-NOTION_DATABASE_ID=abc123def456...
-FIRST_EXPENSE_MONTH=2024-01  # Your first month with expense data
-```
+**Save these values - you'll need them in [Configure Environment Variables](#configure-environment-variables):**
+- `NOTION_API_KEY`: Your API secret from step 2
+- `NOTION_DATABASE_ID`: The database ID from this step
 
 ---
 
@@ -62,7 +51,7 @@ FIRST_EXPENSE_MONTH=2024-01  # Your first month with expense data
 
 ### 1. Create Your Budget Sheet
 
-Create a Google Sheet with columns:
+Create a Google Sheet with columns or duplicate this [template](https://docs.google.com/spreadsheets/d/1mf3u9zqNAhXSNc7v2GYphqUjYIN6PHYEgjTAHuvD50M):
 
 | month   | category  | budget_eur |
 |---------|-----------|------------|
@@ -112,37 +101,20 @@ https://docs.google.com/spreadsheets/d/abc123xyz.../edit
                                        This is your sheet ID
 ```
 
-### 5. Set Environment Variables
-
-```bash
-# Paste entire JSON content as a single line
-GOOGLE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"...","private_key":"...",...}'
-
-GOOGLE_SHEETS_ID=abc123xyz...
-
-# Optional: specify range (defaults to Sheet1!A:C)
-GOOGLE_SHEETS_RANGE=Sheet1!A:C
-```
+**Save these values - you'll need them in [Configure Environment Variables](#configure-environment-variables):**
+- `GOOGLE_SERVICE_ACCOUNT`: The entire JSON file content from step 2
+- `GOOGLE_SHEETS_ID`: The sheet ID from this step
 
 ---
 
-## Environment Variables Summary
+## Configure Environment Variables
+
+Now that you have all the required credentials, configure them based on your environment:
 
 ### Local Development
 
-Create a `.env` file in the project root:
-
-```bash
-# Notion
-NOTION_API_KEY=secret_xxx
-NOTION_DATABASE_ID=xxx
-FIRST_EXPENSE_MONTH=2024-01
-
-# Google Sheets
-GOOGLE_SERVICE_ACCOUNT='{"type":"service_account",...}'
-GOOGLE_SHEETS_ID=xxx
-GOOGLE_SHEETS_RANGE=Sheet1!A:C  # optional, defaults to Sheet1!A:C
-```
+1. Create a `.env` file in the project root  from exemple (`cp .env.example .env`)
+2. Edit values from those obtained in previous steps
 
 The `.env` file is gitignored and will be automatically loaded when you run `npm run dev`.
 

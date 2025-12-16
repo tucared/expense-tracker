@@ -25,9 +25,7 @@ A personal expense dashboard built with [Observable Framework](https://observabl
 4. Open http://localhost:3000
 
 **Data setup:** Requires Notion database + Google Sheet with service account.
-- [Notion template](https://adjoining-heath-cac.notion.site/1e81ed43cd7081609485d8f73c0d5e36?v=1e81ed43cd7081f88063000c38133b27) (duplicate to your workspace)
-- [Google Sheets template](https://docs.google.com/spreadsheets/d/1mf3u9zqNAhXSNc7v2GYphqUjYIN6PHYEgjTAHuvD50M/edit?gid=0#gid=0) (make a copy)
-- Follow [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for detailed setup instructions
+See [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for instructions
 
 **Deployment:** See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for instructions.
 
