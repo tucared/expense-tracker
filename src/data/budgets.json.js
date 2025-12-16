@@ -106,21 +106,14 @@ async function fetchBudgets() {
   return budgets.filter((b) => b.month && b.category);
 }
 
-// Fetch budgets with fallback to sample data on error
+// Fetch budgets
 let budgets;
 try {
   budgets = await fetchBudgets();
   console.warn(`Fetched ${budgets.length} budgets from Google Sheets`);
 } catch (error) {
   console.error(`Failed to fetch budgets: ${error.message}`);
-  console.warn("Falling back to sample data");
-
-  // Load sample data
-  const fs = await import("fs");
-  const path = await import("path");
-  const samplePath = path.join(import.meta.dirname, "sample-budgets.json");
-  const sampleData = fs.readFileSync(samplePath, "utf-8");
-  budgets = JSON.parse(sampleData);
+  budgets = [];
 }
 
 console.log(JSON.stringify(budgets));
