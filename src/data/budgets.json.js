@@ -22,7 +22,14 @@ try {
 
 // Generate JWT for service account authentication
 async function getAccessToken() {
-  const { client_email, private_key } = credentials;
+  const { client_email, private_key: rawPrivateKey } = credentials;
+
+  // Fix common private key formatting issues:
+  // 1. Replace literal \n with actual newlines (common issue with env vars)
+  // 2. Fix PEM header/footer missing spaces (BEGINPRIVATEKEY -> BEGIN PRIVATE KEY)
+  let private_key = rawPrivateKey.replace(/\\n/g, '\n');
+  private_key = private_key.replace(/-----BEGINPRIVATEKEY-----/g, '-----BEGIN PRIVATE KEY-----');
+  private_key = private_key.replace(/-----ENDPRIVATEKEY-----/g, '-----END PRIVATE KEY-----');
 
   const now = Math.floor(Date.now() / 1000);
   const header = {
@@ -98,7 +105,7 @@ async function fetchBudgets() {
   // Skip header row, parse remaining rows
   // Expected format: month, category, budget_eur
   const budgets = rows.slice(1).map((row) => ({
-    month: row[0] || "",
+    month: row[0] ? row[0].slice(0, 7) : "", // Extract YYYY-MM from YYYY-MM-DD
     category: row[1] || "",
     budget_eur: parseFloat(row[2]) || 0,
   }));
