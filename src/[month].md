@@ -18,15 +18,23 @@ const month = observable.params.month;
 // Note: FileAttachment requires observable.params directly in template literal
 const expenses = await FileAttachment(`data/expenses-${observable.params.month}.json`).json();
 const allBudgets = await FileAttachment("data/budgets.json").json();
+const allowances = await FileAttachment("data/allowances.json").json();
 
 // Filter budgets for this month
 const budgets = allBudgets.filter(b => b.month === month);
 ```
 
 ```js
-// Calculate totals
+const ALLOWANCE_PREFIX = "Allowance - ";
+
+// Filter out allowance budgets (expenses already exclude allowances via data loader)
+const nonAllowanceBudgets = budgets.filter(b => !b.category.startsWith(ALLOWANCE_PREFIX));
+```
+
+```js
+// Calculate totals (expenses already exclude allowances)
 const totalSpent = d3.sum(expenses, d => d.amount);
-const totalBudget = d3.sum(budgets, d => d.budget_eur);
+const totalBudget = d3.sum(nonAllowanceBudgets, d => d.budget_eur);
 const remaining = totalBudget - totalSpent;
 const transactionCount = expenses.length;
 
@@ -70,6 +78,28 @@ if (isOverBudget) {
 }
 ```
 
+```js
+if (allowances.length > 0) {
+  display(html`<div class="allowance-widget">
+    <h3 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600; color: var(--theme-foreground-muted);">
+      Allowance Balances (All Time)
+    </h3>
+    <div class="allowance-cards">
+      ${allowances.map(a => html`<div class="allowance-card">
+        <div class="allowance-person">${a.person}</div>
+        <div class="allowance-balance" style="color: ${a.balance >= 0 ? 'var(--theme-accent)' : 'var(--theme-red)'}">
+          ${a.balance.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})}
+        </div>
+        <div class="allowance-details">
+          <span title="Total budgeted">${a.totalBudget.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})} budgeted</span>
+          <span title="Total spent">${a.totalSpent.toLocaleString("fr-FR", {style: "currency", currency: "EUR"})} spent</span>
+        </div>
+      </div>`)}
+    </div>
+  </div>`);
+}
+```
+
 <div class="grid grid-cols-4">
   <div class="card">
     <h2>Spent This Month</h2>
@@ -92,8 +122,10 @@ if (isOverBudget) {
 ## Budget Burndown
 
 ```js
-// Get all categories
-const categories = [...new Set(expenses.map(e => e.category))].filter(Boolean).sort();
+// Get all categories (excluding allowances)
+const categories = [...new Set(expenses.map(e => e.category))]
+  .filter(cat => cat && !cat.startsWith(ALLOWANCE_PREFIX))
+  .sort();
 
 // Category filter for burndown chart
 const selectedBurndownCategory = view(Inputs.select(
@@ -103,15 +135,15 @@ const selectedBurndownCategory = view(Inputs.select(
 ```
 
 ```js
-// Filter expenses for burndown
+// Filter expenses for burndown (expenses already exclude allowances)
 const burndownExpenses = expenses.filter(e =>
   selectedBurndownCategory === "All Categories" || e.category === selectedBurndownCategory
 );
 
-// Get budget total for selected category
+// Get budget total for selected category (excluding allowances)
 const budgetTotal = selectedBurndownCategory === "All Categories"
-  ? d3.sum(budgets, b => b.budget_eur)
-  : budgets.find(b => b.category === selectedBurndownCategory)?.budget_eur || 0;
+  ? d3.sum(nonAllowanceBudgets, b => b.budget_eur)
+  : nonAllowanceBudgets.find(b => b.category === selectedBurndownCategory)?.budget_eur || 0;
 
 // Calculate days in month
 const daysInMonth = new Date(year, monthNum, 0).getDate();
@@ -222,7 +254,7 @@ const selectedTableCategory = Mutable("All Categories");
 ```
 
 ```js
-// Calculate spending by category
+// Calculate spending by category (expenses already exclude allowances)
 const categorySpending = d3.rollup(
   expenses,
   v => d3.sum(v, d => d.amount),
@@ -232,7 +264,7 @@ const categorySpending = d3.rollup(
 // Build category breakdown data
 const categoryBreakdownData = categories.map(cat => {
   const spent = categorySpending.get(cat) || 0;
-  const budget = budgets.find(b => b.category === cat)?.budget_eur || 0;
+  const budget = nonAllowanceBudgets.find(b => b.category === cat)?.budget_eur || 0;
   return {
     category: cat,
     spent,

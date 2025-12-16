@@ -162,3 +162,48 @@
   font-size: 1.125rem;
   font-weight: 600;
 }
+
+/* Allowance widget */
+.allowance-widget {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.allowance-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.allowance-card {
+  background: var(--theme-foreground-faintest);
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.allowance-person {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--theme-foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.allowance-balance {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.allowance-details {
+  font-size: 0.75rem;
+  color: var(--theme-foreground-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}

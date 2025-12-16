@@ -5,11 +5,19 @@
 // This version introduces "data sources" - databases can have multiple data sources.
 // We auto-discover the data_source_id and use it for queries instead of database_id.
 // See: https://developers.notion.com/docs/upgrade-guide-2025-09-03
+//
+// NOTE: Allowance expenses are excluded from monthly data (handled by allowances.json.js)
 
 import { parseArgs } from "node:util";
 
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
+
+// Parse allowance categories from env var (comma-separated)
+// These will be excluded from monthly expense data
+const ALLOWANCE_CATEGORIES = process.env.ALLOWANCE_CATEGORIES
+  ? process.env.ALLOWANCE_CATEGORIES.split(",").map(c => c.trim())
+  : [];
 
 // Parse CLI argument
 const { values } = parseArgs({
@@ -143,7 +151,7 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
             start_cursor: startCursor,
             page_size: 100,
             sorts: [{ property: "Date", direction: "descending" }],
-            // SERVER-SIDE FILTER: Only fetch this month's expenses
+            // SERVER-SIDE FILTER: Only fetch this month's expenses, excluding allowances
             filter: {
               and: [
                 {
@@ -157,7 +165,14 @@ async function fetchMonthExpenses(startCursor = undefined, retries = 3) {
                   date: {
                     on_or_before: endDate
                   }
-                }
+                },
+                // Exclude all allowance categories
+                ...ALLOWANCE_CATEGORIES.map(cat => ({
+                  property: "Category",
+                  select: {
+                    does_not_equal: cat
+                  }
+                }))
               ]
             }
           }),
@@ -217,6 +232,7 @@ async function fetchAll() {
         };
 
         // Double-check date is in correct month (defense in depth)
+        // Allowances already excluded via server-side filter
         if (expense.date && expense.date.startsWith(month)) {
           expenses.push(expense);
         }
