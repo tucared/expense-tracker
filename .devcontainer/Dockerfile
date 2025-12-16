@@ -153,15 +153,9 @@ RUN ARCH=$(dpkg --print-architecture) && \
     fi; \
   fi
 
-# Copy and set up firewall script
-COPY init-firewall.sh /usr/local/bin/
-USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
-  chmod 0440 /etc/sudoers.d/node-firewall
-
 # Create Chrome symlink for MCP Playwright server on arm64
 # The MCP server looks for Chrome at /opt/google/chrome/chrome
+USER root
 RUN ARCH=$(dpkg --print-architecture) && \
   if [ "$ARCH" != "amd64" ]; then \
     CHROMIUM_PATH=$(find /home/node/.cache/ms-playwright -name "chrome" -type f -path "*/chrome-linux/*" 2>/dev/null | head -1) && \
