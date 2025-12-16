@@ -64,12 +64,18 @@ while read -r cidr; do
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 # Resolve and add other allowed domains
+# Excluded: registry.npmjs.org (packages only during container build)
+# Excluded: sentry.io, statsig.* (telemetry blocked)
+#
+# Domain purposes:
+# - api.anthropic.com: Claude Code API
+# - marketplace.visualstudio.com, vscode.blob.core.windows.net, update.code.visualstudio.com: VSCode extensions
+# - cdn.jsdelivr.net, data.jsdelivr.com, esm.sh: Observable Framework CDNs
+# - cdn.playwright.dev, playwright.download.prss.microsoft.com: Playwright browser updates
+# - api.notion.com: Expense data source
+# - www.googleapis.com, oauth2.googleapis.com, sheets.googleapis.com: Budget data source
 for domain in \
-    "registry.npmjs.org" \
     "api.anthropic.com" \
-    "sentry.io" \
-    "statsig.anthropic.com" \
-    "statsig.com" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com" \

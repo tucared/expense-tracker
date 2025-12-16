@@ -29,11 +29,15 @@ Standard Observable Framework structure: pages in `src/`, data loaders in `src/d
 
 ## Important Dev Container Notes
 
-- Running in a network-restricted dev container
-- **Local builds fail** (CDN blocked by proxy) — this is expected
-- Use `npm run dev` for development (works perfectly)
-- All production builds happen on Cloudflare Pages (has CDN access)
+- Running in a network-restricted dev container with firewall rules
+- **Package installation**: npm registry access is blocked during development for security
+  - To add new packages: update `package.json`, then **rebuild the dev container**
+  - Packages are installed during container build via `postCreateCommand`
+- **Local builds**: `npm run build` works within the container (CDNs are allowed through firewall)
+  - Use `npm run dev` for development (works perfectly)
+  - Production builds happen automatically on Cloudflare Pages via GitHub integration
 - Use the playwright skill to verify changes visually
+- **Playwright**: Browser automation works via Chromium installed in container at `/opt/google/chrome/chrome`
 
 ## Documentation
 
