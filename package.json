@@ -5,14 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env -- observable preview",
-    "build": "dotenv -e .env -- observable build",
-    "deploy": "wrangler pages deploy dist --project-name=expense-tracker"
+    "build": "dotenv -e .env -- observable build"
   },
   "devDependencies": {
     "@observablehq/framework": "1.13.3",
     "dotenv": "17.2.3",
-    "dotenv-cli": "11.0.0",
-    "wrangler": "4.50.0"
+    "dotenv-cli": "11.0.0"
   },
   "dependencies": {
     "@observablehq/plot": "0.6.17",
