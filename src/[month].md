@@ -8,6 +8,9 @@ style: custom-style.css
 // Import d3 and Plot from node_modules instead of CDN
 import * as d3 from "d3";
 import * as Plot from "@observablehq/plot";
+
+// Import currency conversion utilities
+import { convertExpensesToEUR } from "./lib/currency.js";
 ```
 
 ```js
@@ -16,9 +19,14 @@ const month = observable.params.month;
 
 // Load month-specific expenses and shared budgets
 // Note: FileAttachment requires observable.params directly in template literal
-const expenses = await FileAttachment(`data/expenses-${observable.params.month}.json`).json();
+const rawExpenses = await FileAttachment(`data/expenses-${observable.params.month}.json`).json();
 const allBudgets = await FileAttachment("data/budgets.json").json();
-const allowances = await FileAttachment("data/allowances.json").json();
+const rawAllowanceExpenses = await FileAttachment("data/allowance-expenses.json").json();
+const currencyRates = await FileAttachment("data/currency-rates.json").json();
+
+// Convert expenses to EUR using client-side conversion
+const expenses = convertExpensesToEUR(rawExpenses, currencyRates);
+const allowanceExpenses = convertExpensesToEUR(rawAllowanceExpenses, currencyRates);
 
 // Filter budgets for this month
 const budgets = allBudgets.filter(b => b.month === month);
@@ -29,6 +37,36 @@ const ALLOWANCE_PREFIX = "Allowance - ";
 
 // Filter out allowance budgets (expenses already exclude allowances via data loader)
 const nonAllowanceBudgets = budgets.filter(b => !b.category.startsWith(ALLOWANCE_PREFIX));
+
+// Calculate allowances client-side by composing budgets and expenses
+const allowanceBudgets = allBudgets.filter(b => b.category.startsWith(ALLOWANCE_PREFIX));
+
+// Extract unique persons from both budgets and expenses
+const persons = new Set([
+  ...allowanceBudgets.map(b => b.category.slice(ALLOWANCE_PREFIX.length)),
+  ...allowanceExpenses.map(e => e.category.slice(ALLOWANCE_PREFIX.length))
+]);
+
+// Calculate balances per person
+const allowances = Array.from(persons).map(person => {
+  const categoryName = ALLOWANCE_PREFIX + person;
+
+  const totalBudget = allowanceBudgets
+    .filter(b => b.category === categoryName)
+    .reduce((sum, b) => sum + b.budget_eur, 0);
+
+  const totalSpent = allowanceExpenses
+    .filter(e => e.category === categoryName)
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  return {
+    person: person || "(Unnamed)",
+    totalBudget,
+    totalSpent,
+    balance: totalBudget - totalSpent,
+    transactionCount: allowanceExpenses.filter(e => e.category === categoryName).length
+  };
+}).sort((a, b) => a.person.localeCompare(b.person));
 ```
 
 ```js

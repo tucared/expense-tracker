@@ -33,6 +33,7 @@ Standard Observable Framework structure: pages in `src/`, data loaders in `src/d
 - Running in a dev container
 - Production builds happen automatically on Cloudflare Pages via GitHub integration
 - Use the playwright cli to verify changes visually
+- Data loaders should be independant to one another
 - **Dependencies**: All npm packages pinned to exact versions (no `^`). Use `npm ci` for installs, `npm install --save-exact` for new packages. Run `npm audit` regularly for security checks.
 
 ## Documentation
