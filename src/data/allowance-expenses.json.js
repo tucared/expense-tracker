@@ -1,15 +1,11 @@
-// Allowances data loader: fetches ALL expenses from Notion
-// and filters for allowances client-side
+// Allowance expenses data loader: fetches ONLY allowance expenses from Notion
+// Returns raw expense data - calculation logic moved to client-side
+// NOTE: Outputs original currency amounts - conversion happens client-side
 //
 // NOTION API VERSION: 2025-09-03
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { convertToEUR } from "../lib/currency-converter.js";
-
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
-const ALLOWANCE_PREFIX = "Allowance - ";
 
 // Parse allowance categories from env var (comma-separated)
 // Example: ALLOWANCE_CATEGORIES="Allowance - Max,Allowance - Cla"
@@ -19,13 +15,13 @@ const ALLOWANCE_CATEGORIES = process.env.ALLOWANCE_CATEGORIES
 
 // Fallback to empty data if no credentials or no categories specified
 if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
-  console.warn("Notion credentials not found, returning empty allowances");
+  console.warn("Notion credentials not found, returning empty allowance expenses");
   console.log(JSON.stringify([]));
   process.exit(0);
 }
 
 if (ALLOWANCE_CATEGORIES.length === 0) {
-  console.warn("ALLOWANCE_CATEGORIES env var not set, returning empty allowances");
+  console.warn("ALLOWANCE_CATEGORIES env var not set, returning empty allowance expenses");
   console.log(JSON.stringify([]));
   process.exit(0);
 }
@@ -185,37 +181,6 @@ async function fetchAllExpenses() {
         isCredit: props.Credit?.checkbox || false,
       };
 
-      // Determine which currency and convert if needed
-      let finalAmount = expense.amountEUR;
-
-      if (expense.amountBRL > 0 && expense.amountEUR === 0) {
-        // BRL expense - convert to EUR using ASOF daily rates
-        try {
-          finalAmount = await convertToEUR(expense.amountBRL, "BRL", expense.date);
-        } catch (error) {
-          console.warn(
-            `Failed to convert BRL for expense ${expense.id}: ${error.message}`
-          );
-          finalAmount = expense.amountBRL; // Keep BRL amount (for debugging)
-        }
-      } else if (expense.amountBRL > 0 && expense.amountEUR > 0) {
-        // Both filled - use EUR, log warning
-        console.warn(
-          `Expense ${expense.id} has both Amount and Amount_BRL, using EUR`
-        );
-      }
-
-      // Apply credit/refund logic: credits are negative
-      if (expense.isCredit) {
-        finalAmount = -Math.abs(finalAmount);
-      }
-
-      // Store only EUR amount (transparent to display)
-      expense.amount = Math.round(finalAmount * 100) / 100; // Round to 2 decimals
-      delete expense.amountEUR;
-      delete expense.amountBRL;
-      delete expense.isCredit;
-
       allExpenses.push(expense);
     }
 
@@ -236,67 +201,11 @@ async function fetchAllExpenses() {
   return allExpenses;
 }
 
-// Load budgets from cache
-function loadBudgets() {
-  try {
-    const budgetsPath = join(process.cwd(), "src/.observablehq/cache/data/budgets.json");
-    return JSON.parse(readFileSync(budgetsPath, "utf-8"));
-  } catch (error) {
-    console.warn("Could not load budgets.json:", error.message);
-    return [];
-  }
-}
-
-// Main processing
-async function generateAllowances() {
-  try {
-    // Fetch all allowance expenses from Notion
-    const allowanceExpenses = await fetchAllExpenses();
-
-    // Load budgets
-    const allBudgets = loadBudgets();
-    const allowanceBudgets = allBudgets.filter(b => b.category.startsWith(ALLOWANCE_PREFIX));
-
-    // Extract unique persons
-    const persons = new Set([
-      ...allowanceBudgets.map(b => b.category.slice(ALLOWANCE_PREFIX.length)),
-      ...allowanceExpenses.map(e => e.category.slice(ALLOWANCE_PREFIX.length))
-    ]);
-
-    // Calculate balances per person
-    const allowances = Array.from(persons).map(person => {
-      const categoryName = ALLOWANCE_PREFIX + person;
-
-      const totalBudget = allowanceBudgets
-        .filter(b => b.category === categoryName)
-        .reduce((sum, b) => sum + b.budget_eur, 0);
-
-      const totalSpent = allowanceExpenses
-        .filter(e => e.category === categoryName)
-        .reduce((sum, e) => sum + e.amount, 0);
-
-      return {
-        person: person || "(Unnamed)",
-        totalBudget,
-        totalSpent,
-        balance: totalBudget - totalSpent,
-        transactionCount: allowanceExpenses.filter(e => e.category === categoryName).length
-      };
-    }).sort((a, b) => a.person.localeCompare(b.person));
-
-    console.warn(`Generated ${allowances.length} allowance accounts`);
-    return allowances;
-  } catch (error) {
-    console.error(`Failed to generate allowances: ${error.message}`);
-    return [];
-  }
-}
-
 // Top-level error handling
 try {
-  const allowances = await generateAllowances();
-  console.log(JSON.stringify(allowances));
+  const allowanceExpenses = await fetchAllExpenses();
+  console.log(JSON.stringify(allowanceExpenses));
 } catch (error) {
-  console.error(`Fatal error generating allowances: ${error.message}`);
+  console.error(`Fatal error fetching allowance expenses: ${error.message}`);
   console.log(JSON.stringify([]));
 }
