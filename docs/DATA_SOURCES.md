@@ -16,12 +16,26 @@ The dashboard pulls data from two sources:
 
 Create a Notion database with these properties or duplicate this [template](https://adjoining-heath-cac.notion.site/1e81ed43cd7081609485d8f73c0d5e36?v=1e81ed43cd7081f88063000c38133b27):
 
-| Property         | Type   | Description                        |
-|------------------|--------|------------------------------------|
-| `Date`           | Date   | When the expense occurred          |
-| `Amount`         | Number | Cost in your currency              |
-| `Category`       | Select | e.g., Groceries, Transport, Dining |
-| `Payment Method` | Select | e.g., Card, Cash, Bank Transfer    |
+| Property         | Type     | Description                        |
+|------------------|----------|------------------------------------|
+| `Date`           | Date     | When the expense occurred          |
+| `Amount`         | Number   | Cost in EUR (European expenses)    |
+| `Amount_BRL`     | Number   | Cost in BRL (Brazil expenses)      |
+| `Credit`         | Checkbox | Check if this is a refund/credit   |
+| `Category`       | Select   | e.g., Groceries, Transport, Dining |
+| `Payment Method` | Select   | e.g., Card, Cash, Bank Transfer    |
+
+**Currency Conversion:**
+- Use `Amount` for expenses in EUR (default currency)
+- Use `Amount_BRL` for expenses in Brazilian Real
+- Fill only ONE of these fields per expense (never both)
+- BRL amounts are automatically converted to EUR using ECB historical rates
+- Conversion uses daily rates with ASOF logic (most recent rate at or before expense date)
+- If daily rate unavailable (e.g., weekends), uses previous day's rate
+
+**Credits & Refunds:**
+- Check the `Credit` checkbox for refunds or reimbursements
+- Credits are stored as negative amounts and reduce total spending
 
 ### 2. Create a Notion Integration and share with Database
 

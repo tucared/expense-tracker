@@ -9,6 +9,7 @@
 // NOTE: Allowance expenses are excluded from monthly data (handled by allowances.json.js)
 
 import { parseArgs } from "node:util";
+import { convertToEUR } from "../lib/currency-converter.js";
 
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
@@ -226,10 +227,43 @@ async function fetchAll() {
         const expense = {
           id: page.id,
           date: props.Date?.date?.start || null,
-          amount: props.Amount?.number || 0,
+          amountEUR: props.Amount?.number || 0,
+          amountBRL: props.Amount_BRL?.number || 0,
           category: props.Category?.select?.name || "Uncategorized",
           payment_method: props["Payment Method"]?.select?.name || "Unknown",
+          isCredit: props.Credit?.checkbox || false,
         };
+
+        // Determine which currency and convert if needed
+        let finalAmount = expense.amountEUR;
+
+        if (expense.amountBRL > 0 && expense.amountEUR === 0) {
+          // BRL expense - convert to EUR using ASOF daily rates
+          try {
+            finalAmount = await convertToEUR(expense.amountBRL, "BRL", expense.date);
+          } catch (error) {
+            console.warn(
+              `Failed to convert BRL for expense ${expense.id}: ${error.message}`
+            );
+            finalAmount = expense.amountBRL; // Keep BRL amount (for debugging)
+          }
+        } else if (expense.amountBRL > 0 && expense.amountEUR > 0) {
+          // Both filled - use EUR, log warning
+          console.warn(
+            `Expense ${expense.id} has both Amount and Amount_BRL, using EUR`
+          );
+        }
+
+        // Apply credit/refund logic: credits are negative
+        if (expense.isCredit) {
+          finalAmount = -Math.abs(finalAmount);
+        }
+
+        // Store only EUR amount (transparent to display)
+        expense.amount = Math.round(finalAmount * 100) / 100; // Round to 2 decimals
+        delete expense.amountEUR;
+        delete expense.amountBRL;
+        delete expense.isCredit;
 
         // Double-check date is in correct month (defense in depth)
         // Allowances already excluded via server-side filter
